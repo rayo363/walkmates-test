@@ -44,21 +44,22 @@ class SeekerSpecBasedTest {
     }
 
     // =================================================================
-    // Aktivitet 2.1 + 2.2 — wallet (FR-1.3). Ansvarig: Muntaser.
+    // Activities 2.1 + 2.2 — wallet (FR-1.3). Owner: Muntaser
     // =================================================================
     @Nested
     @DisplayName("Wallet: ekvivalensklasser och gränsvärden (FR-1.3)")
     class WalletBoundaryTests {
 
-        /** Giltig Seeker enligt FR-1.1. Saldo startar på 0.00 (FR-1.2). */
+        /** A valid Seeker per FR-1.1. Balance starts at 0.00 (FR-1.2). */
         private Seeker newSeeker() {
             return new Seeker("muntaser@example.se", "Muntaser", "0701234567");
         }
 
         /**
-         * Fyller saldot till exakt 20 000.00 med fyra tillåtna insättningar.
-         * Nödvändigt eftersom addFunds kontrollerar maxbelopp per transaktion
-         * FÖRE maxsaldo — en enda stor insättning når aldrig maxsaldo-kontrollen.
+         * Fills the wallet to exactly 20 000.00 using four permitted top-ups.
+         * Required because addFunds validates the per-transaction maximum BEFORE
+         * the maximum balance — a single large top-up never reaches the
+         * maximum-balance check.
          */
         private Seeker seekerWithFullWallet() {
             Seeker s = newSeeker();
@@ -68,7 +69,7 @@ class SeekerSpecBasedTest {
             return s;
         }
 
-        // ---------- Aktivitet 2.1: ekvivalensklasser ----------
+        // ---------- Activity 2.1: equivalence partitions ----------
 
         @Test
         @DisplayName("V1: giltigt belopp inom [10, 5000] adderas till saldot")
@@ -101,7 +102,7 @@ class SeekerSpecBasedTest {
             assertThat(s.getBalance()).isCloseTo(Seeker.MAX_BALANCE, within(0.001));
         }
 
-        // ---------- Aktivitet 2.2: gränsvärden, minimum 10.00 ----------
+        // ---------- Activity 2.2: boundary values, minimum 10.00 ----------
 
         @Test
         @DisplayName("9.99 (strax under minimum) avvisas")
@@ -133,7 +134,7 @@ class SeekerSpecBasedTest {
             assertThat(s.getBalance()).isCloseTo(10.01, within(0.001));
         }
 
-        // ---------- Aktivitet 2.2: gränsvärden, max per transaktion 5 000.00 ----------
+        // ---------- Activity 2.2: boundary values, max per transaction 5 000.00 ----------
 
         @Test
         @DisplayName("4 999.99 (strax under maxbelopp) accepteras")
@@ -155,7 +156,7 @@ class SeekerSpecBasedTest {
             assertThat(s.getBalance()).isZero();
         }
 
-        // ---------- Aktivitet 2.2: gränsvärden, maxsaldo 20 000.00 ----------
+        // ---------- Activity 2.2: boundary values, maximum balance 20 000.00 -------
 
         @Test
         @DisplayName("19 999.99 (strax under maxsaldo) accepteras")
@@ -186,15 +187,15 @@ class SeekerSpecBasedTest {
             s.addFunds(Seeker.MAX_SINGLE_TOP_UP);
             s.addFunds(Seeker.MAX_SINGLE_TOP_UP);
             s.addFunds(4_999.99);
-            // Saldo: 19 999.99. En insättning på 0.02 vore under minimum,
-            // så minsta tillåtna insättning (10.00) används i stället.
+            // Balance: 19 999.99. A top-up of 0.02 would fall below the minimum,
+            // so the smallest permitted top-up (10.00) is used instead.
 
             assertThatThrownBy(() -> s.addFunds(Seeker.MIN_TOP_UP))
                     .isInstanceOf(IllegalArgumentException.class);
             assertThat(s.getBalance()).isCloseTo(19_999.99, within(0.001));
         }
 
-        // ---------- Avrundning, half-up (FR-1.3) ----------
+        // ---------- Rounding, half-up (FR-1.3) ----------
 
         @Test
         @DisplayName("10.005 avrundas half-up till 10.01")
